@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quanto custa — Prefeitos e Vereadores do Ceará</title>
+<meta name="description" content="Projeto Quanto Custa: quanto custam as câmaras municipais, os gabinetes dos prefeitos e as prefeituras dos 184 municípios do Ceará desde 2017 — dados oficiais do TCE-CE, TSE, IBGE e CGU, atualizados todo dia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="tema.css?v=2">
+<link rel="stylesheet" href="municipios.css?v=3">
+</head>
+<body>
+<aside class="menu" id="menu" aria-label="Menu">
+  <div class="marca"><span class="logo" aria-hidden="true">R$</span><div><strong>Projeto Quanto Custa</strong><small class="marca-sub">Prefeitos e vereadores · CE</small></div></div>
+  <nav>
+    <button data-pag="inicio"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+    <button data-pag="prefeitos"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>Prefeitos</button>
+    <button data-pag="camaras"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-7M15 21v-7M2 10l10-6 10 6z"/></svg>Vereadores e câmaras</button>
+    <button data-pag="municipio"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Meu município</button>
+    <button data-pag="metodo"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5zM9 10h6M9 14h6"/></svg>Como calculamos</button>
+  </nav>
+  <p class="menu-rodape" id="atualizado"></p>
+</aside>
+<div class="veu" id="veu" hidden></div>
+
+<div class="conteudo">
+  <header class="topo-movel">
+    <button class="hamburguer" id="abrir-menu" aria-label="Abrir menu" aria-controls="menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <strong>Quanto custa · Municípios do CE</strong>
+  </header>
+
+  <section class="segmentacoes" aria-label="Filtros">
+    <label>Ano<select id="f-ano"></select></label>
+    <label class="busca">Município<input id="f-mun" list="lista-mun" type="search" placeholder="Digite o nome da cidade" autocomplete="off"></label>
+    <datalist id="lista-mun"></datalist>
+    <label class="chave"><input id="f-ipca" type="checkbox" checked><span>Valores de hoje<small id="ipca-ref">corrigidos pelo IPCA</small></span></label>
+  </section>
+  <p class="aviso" id="aviso" hidden></p>
+
+  <main>
+    <!-- INÍCIO -->
+    <section class="pagina" data-pag="inicio">
+      <div class="hero">
+        <div>
+          <p class="selo">Projeto Quanto Custa · Ceará</p>
+          <h1>Quanto custam o seu prefeito e os seus vereadores?</h1>
+          <p class="hero-sub">Os 184 municípios do Ceará, desde 2017: o custo das câmaras municipais e dos gabinetes dos prefeitos, para onde vai o dinheiro da prefeitura e de onde ele vem. Tudo com dados oficiais, <strong>corrigidos pela inflação (IPCA)</strong>.</p>
+          <p><button class="btn" data-ir="municipio" type="button">Ver o meu município</button></p>
+        </div>
+        <div class="kpis" id="i-kpis"></div>
+      </div>
+      <div class="grade">
+        <article class="visual span-6"><header><h2>Câmaras mais caras por habitante</h2><span class="dica">top 5 · clique para abrir</span></header><ol class="top5" id="i-top-hab"></ol></article>
+        <article class="visual span-6"><header><h2>Câmaras mais caras por vereador</h2><span class="dica">top 5 · clique para abrir</span></header><ol class="top5" id="i-top-ver"></ol></article>
+        <article class="visual span-6"><header><h2>Gabinetes de prefeito mais caros</h2><span class="dica">prefeito + vice · top 5</span></header><ol class="top5" id="i-top-gab"></ol></article>
+        <article class="visual span-6"><header><h2>Quem mais depende de dinheiro de fora</h2><span class="dica">transferências da União e do Estado sobre a receita · top 5</span></header><ol class="top5" id="i-top-dep"></ol></article>
+      </div>
+    </section>
+
+    <!-- PREFEITOS -->
+    <section class="pagina" data-pag="prefeitos">
+      <div class="kpis" id="p-kpis"></div>
+      <article class="visual"><header><h2>Prefeituras e gabinetes</h2>
+        <span class="filtros-tabela"><input id="p-busca" class="mini-busca" type="search" placeholder="Filtrar por cidade, prefeito ou partido"></span>
+        <span class="dica">clique no título da coluna para ordenar · no nome para abrir</span></header>
+        <div class="tabela-rolagem"><table class="ranking" id="p-tab"></table></div>
+        <button class="btn-sec mais" id="p-mais" type="button" hidden>Mostrar mais</button></article>
+    </section>
+
+    <!-- CÂMARAS -->
+    <section class="pagina" data-pag="camaras">
+      <div class="kpis" id="c-kpis"></div>
+      <article class="visual"><header><h2>Câmaras municipais</h2>
+        <span class="filtros-tabela"><input id="c-busca" class="mini-busca" type="search" placeholder="Filtrar por cidade"></span>
+        <span class="dica">custo por vereador = gasto total da câmara ÷ vereadores eleitos</span></header>
+        <div class="tabela-rolagem"><table class="ranking" id="c-tab"></table></div>
+        <button class="btn-sec mais" id="c-mais" type="button" hidden>Mostrar mais</button></article>
+    </section>
+
+    <!-- MUNICÍPIO -->
+    <section class="pagina" data-pag="municipio">
+      <div id="m-vazio" class="vazio">Escolha um município no campo <strong>Município</strong> acima.</div>
+      <div id="m-conteudo" hidden>
+        <h2 class="titulo-mun" id="m-titulo"></h2>
+        <p class="sub" id="m-sub"></p>
+        <div class="kpis" id="m-kpis"></div>
+        <div class="grade">
+          <article class="visual span-6"><header><h2>Prefeito e vice</h2><span class="dica" id="m-mandato"></span></header><div id="m-pref"></div></article>
+          <article class="visual span-6"><header><h2>Câmara municipal</h2><span class="selo-conf" id="m-conf-cam"></span></header>
+            <div class="canvas-box"><canvas id="g-camara"></canvas></div></article>
+          <article class="visual span-12"><header><h2>Vereadores</h2><span class="dica">gastos ligados a cada vereador pelas notas de empenho da câmara</span></header>
+            <div class="tabela-rolagem"><table class="ranking" id="m-ver"></table></div></article>
+          <article class="visual span-12"><header><h2>Quem recebeu da câmara e dos gabinetes</h2>
+            <select id="m-orgao" class="mini"><option value="camara">Câmara</option><option value="prefeito">Gabinete do prefeito</option><option value="vice">Gabinete do vice</option></select>
+            <span class="dica">clique no nome para ver cada nota</span></header>
+            <div class="tabela-rolagem"><table class="ranking" id="m-forn"></table></div>
+            <button class="btn-sec mais" id="m-forn-mais" type="button" hidden>Mostrar mais</button></article>
+
+          <article class="visual span-12 notas-box" id="m-notas-box"><header><h2>Nota a nota: câmara e gabinetes</h2>
+            <span class="dica">cada nota de empenho com o que foi comprado, as notas fiscais, os itens e os pagamentos · clique na linha para abrir</span></header>
+            <div class="filtros-tabela">
+              <input id="n-q" class="mini-busca" type="search" placeholder="Empresa, CNPJ, pessoa, histórico, nº da nota fiscal ou item">
+              <select id="n-orgao" class="mini"><option value="">Câmara e gabinetes</option><option value="camara">Câmara</option><option value="prefeito">Gabinete do prefeito</option><option value="vice">Gabinete do vice</option></select>
+              <select id="n-mes" class="mini"><option value="">Ano inteiro</option></select>
+              <select id="n-el" class="mini"><option value="">Todos os tipos de gasto</option></select>
+              <select id="n-ord" class="mini"><option value="data">Mais recentes primeiro</option><option value="valor">Maiores valores primeiro</option></select>
+              <label class="chave"><input id="n-nf" type="checkbox"><span>Só com nota fiscal</span></label>
+            </div>
+            <div class="kpis" id="n-kpis"></div>
+            <p class="notas-resumo" id="n-info"></p>
+            <div class="tabela-rolagem"><table class="ranking" id="n-tab"></table></div>
+            <p><button class="btn-sec mais" id="n-mais" type="button" hidden>Mostrar mais</button>
+              <button class="btn-sec" id="n-csv" type="button">Baixar planilha (CSV)</button></p>
+            <details id="n-restos-box" hidden><summary>Pagamentos deste ano de notas de anos anteriores (restos a pagar)</summary>
+              <div class="tabela-rolagem"><table class="ranking mini-tab" id="n-restos"></table></div></details>
+          </article>
+
+          <article class="visual span-12" id="m-pf-box"><header><h2>Quem recebeu da prefeitura inteira</h2>
+            <span class="dica">todas as secretarias, fundos e órgãos · clique no nome para a ficha completa</span></header>
+            <div class="filtros-tabela">
+              <input id="pf-q" class="mini-busca" type="search" placeholder="Empresa, CNPJ ou pessoa">
+              <select id="pf-orgao" class="mini"><option value="">Todos os órgãos</option></select>
+              <select id="pf-tipo" class="mini"><option value="">Empresas e pessoas</option><option value="PJ">Só empresas (CNPJ)</option><option value="PF">Só pessoas</option></select>
+            </div>
+            <div class="kpis" id="pf-kpis"></div>
+            <div class="tabela-rolagem"><table class="ranking" id="pf-tab"></table></div>
+            <p><button class="btn-sec mais" id="pf-mais" type="button" hidden>Mostrar mais</button>
+              <button class="btn-sec" id="pf-csv" type="button">Baixar planilha (CSV)</button></p>
+          </article>
+          <article class="visual span-6"><header><h2>Para onde vai o dinheiro da prefeitura</h2><span class="dica">por área</span></header>
+            <div class="canvas-box muito-alto"><canvas id="g-funcao"></canvas></div></article>
+          <article class="visual span-6"><header><h2>De onde vem o dinheiro</h2><span class="dica">receita do ano</span></header>
+            <div class="canvas-box alto"><canvas id="g-receita"></canvas></div>
+            <header style="margin-top:14px"><h2>Emendas parlamentares para a cidade</h2><span class="dica">empenhado no ano</span></header>
+            <div class="tabela-rolagem"><table class="ranking" id="m-emendas"></table></div></article>
+          <article class="visual span-12"><header><h2>A câmara ao longo dos anos</h2></header>
+            <div class="canvas-box"><canvas id="g-hist"></canvas></div></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÉTODO -->
+    <section class="pagina texto" data-pag="metodo">
+      <article class="visual">
+        <h2>De onde vêm os dados</h2>
+        <ul>
+          <li><strong>TCE-CE — API de Dados Abertos do SIM</strong>: balancetes de despesa e receita, notas de empenho e anulações de todos os órgãos das 184 prefeituras e câmaras, desde 2017; e, para a câmara e os gabinetes do prefeito e do vice, também as notas de pagamento, as notas fiscais (número, série, data, valor bruto e líquido, chave da NF-e, CNPJ de quem emitiu) e os itens de cada nota fiscal (descrição, quantidade, unidade, preço unitário, NCM).</li>
+          <li><strong>TSE</strong>: prefeitos, vices e vereadores eleitos em 2016, 2020 e 2024, partido e bens declarados.</li>
+          <li><strong>IBGE</strong>: população estimada de cada ano (e o Censo 2022).</li>
+          <li><strong>CGU — Portal da Transparência</strong>: emendas parlamentares com destino a cada município.</li>
+          <li><strong>Banco Central</strong>: IPCA, para trazer valores antigos para preços de hoje.</li>
+        </ul>
+        <h2>Como medimos o gasto</h2>
+        <p>Usamos a <strong>despesa empenhada líquida</strong> (o que foi empenhado menos as anulações), que é a despesa realizada pela Lei 4.320/64. É a única medida que todos os municípios informam ao TCE do mesmo jeito. Para cada órgão, o robô confere se a soma das notas de empenho, menos as anulações, bate com o balancete do mesmo mês; o selo <span class="ok-txt">conferido</span> aparece quando bate.</p>
+        <p>No total da prefeitura ficam de fora os pagamentos que o município faz a ele mesmo (modalidade 91, como a contribuição ao próprio instituto de previdência), para não contar o mesmo dinheiro duas vezes.</p>
+        <h2>Nota a nota</h2>
+        <p>Cada <strong>nota de empenho</strong> é o compromisso de gasto: diz quem vai receber, quanto e para quê (o "histórico"). Depois vêm a <strong>nota fiscal</strong> (o documento do fornecedor, com os itens comprados) e a <strong>nota de pagamento</strong> (o dinheiro saindo da conta). O site junta as três pela nota de empenho. Valor <em>líquido</em> é o empenhado menos as anulações. Os valores nota a nota são <strong>nominais</strong>, como aparecem nos documentos (sem correção pela inflação).</p>
+        <p>"Pagamentos de notas de anos anteriores" são os <strong>restos a pagar</strong>: compras empenhadas num ano e pagas no ano seguinte.</p>
+        <p>Na lista da prefeitura inteira, a folha de pessoal (salários e encargos pagos sem CNPJ) aparece numa linha só, sem nomes. Notas abaixo de R$ 2.000 de secretarias e fundos aparecem sem o histórico, para o arquivo não ficar pesado demais; o valor delas entra em todos os totais.</p>
+        <h2>Câmara, prefeito e vice</h2>
+        <p>Câmara é o órgão "Câmara Municipal" de cada prefeitura no TCE. Gabinete do prefeito e gabinete do vice são reconhecidos pelo nome do órgão. O custo por vereador é o gasto total da câmara (salários, servidores, assessores, contratos, diárias) dividido pelo número de vereadores eleitos.</p>
+        <h2>O que ainda não dá para saber</h2>
+        <ul>
+          <li><strong>O salário exato de cada prefeito e vereador</strong> não está nos dados abertos do TCE: a folha chega em lote, sem nome. Mostramos o <strong>teto constitucional</strong> do salário do vereador (art. 29, VI: de 20% a 75% do salário do deputado estadual, conforme a população).</li>
+          <li>Gastos ligados a um vereador só aparecem quando a nota de empenho foi paga a ele próprio ou cita "vereador(a) <em>nome</em>" no histórico, com nome que não se confunde com outro vereador. É um retrato parcial.</li>
+          <li>Suplentes que assumiram no meio do mandato e eleições suplementares ainda não entram.</li>
+          <li>O ano corrente vai até o último mês que o município já enviou ao TCE.</li>
+        </ul>
+        <h2>Valores de hoje</h2>
+        <p>Com a chave ligada, cada ano é multiplicado pela inflação acumulada (IPCA) até o último mês divulgado.</p>
+      </article>
+    </section>
+  </main>
+  <p class="rodape">Projeto Quanto Custa · dados oficiais e código aberto. Pessoas físicas aparecem só pelo nome que o TCE publica; CPF nunca é guardado.</p>
+</div>
+<dialog id="ficha-forn" aria-label="Ficha do fornecedor"><button class="fechar" id="ff-fechar" type="button" aria-label="Fechar">×</button><div id="ff-corpo" style="padding:22px"></div></dialog>
+<script src="vendor/chart.umd.js"></script>
+<script src="app.js?v=3"></script>
+</body>
+</html>
