@@ -33,6 +33,9 @@ IBGE_ESTIMATIVA = ("https://servicodados.ibge.gov.br/api/v3/agregados/6579/perio
                    "variaveis/9324?localidades=N6[N3[23]]")
 IBGE_CENSO_2022 = ("https://servicodados.ibge.gov.br/api/v3/agregados/4714/periodos/2022/"
                    "variaveis/93?localidades=N6[N3[23]]")
+# Plano B (outro servidor do IBGE), mesmas tabelas: municípios do CE (n3/23)
+SIDRA_ESTIMATIVA = "https://apisidra.ibge.gov.br/values/t/6579/n6/in%20n3%2023/v/9324/p/all"
+SIDRA_CENSO_2022 = "https://apisidra.ibge.gov.br/values/t/4714/n6/in%20n3%2023/v/93/p/2022"
 
 # --- IPCA (Banco Central, série 433) ---
 IPCA_SGS = ("https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados"

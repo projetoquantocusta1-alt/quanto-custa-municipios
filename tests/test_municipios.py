@@ -349,3 +349,12 @@ def test_arquivos_por_mes_e_compatibilidade_v1(tce_falso, tmp_path, monkeypatch)
 def test_identificador_sem_eleitos_nao_quebra():
     i = montar.Identificador(None)
     assert i.favorecido("QUALQUER") is None and i.citado("VEREADOR FULANO") is None
+
+
+def test_populacao_pelo_sidra():
+    from coletor import extras
+    linhas = [{"NC": "Nível Territorial (Código)", "V": "Valor", "D1C": "Município (Código)", "D2C": "Ano (Código)", "D3C": "Variável (Código)"},
+              {"NC": "6", "V": "2428708", "D1C": "2304400", "D1N": "Fortaleza - CE", "D2C": "2025", "D2N": "2025", "D3C": "9324"},
+              {"NC": "6", "V": "...", "D1C": "2304400", "D2C": "2006", "D3C": "9324"},
+              {"NC": "6", "V": "212437", "D1C": "9324", "D2C": "2312908", "D3C": "2024"}]
+    assert extras.ler_sidra(linhas) == {"2304400": {2025: 2428708}, "2312908": {2024: 212437}}

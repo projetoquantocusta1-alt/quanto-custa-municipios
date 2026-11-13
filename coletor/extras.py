@@ -24,10 +24,40 @@ def ler_ibge(json_ibge) -> dict[str, dict[int, int]]:
     return out
 
 
-def baixar_populacao() -> dict[str, dict[int, int]]:
-    pop = ler_ibge(http.get(config.IBGE_ESTIMATIVA, timeout=120).json())
+def ler_sidra(linhas) -> dict[str, dict[int, int]]:
+    """{ibge7: {ano: pop}} a partir da API do SIDRA (apisidra.ibge.gov.br/values/...).
+    A 1ª linha é o cabeçalho; nas outras, o município e o ano vêm em campos D?C (a ordem varia)."""
+    out: dict[str, dict[int, int]] = {}
+    for r in (linhas or [])[1:]:
+        if not isinstance(r, dict):
+            continue
+        cods = [str(v) for k, v in r.items() if k.startswith("D") and k.endswith("C")]
+        mun = next((c for c in cods if len(c) == 7 and c.isdigit()), None)
+        ano = next((c for c in cods if len(c) == 4 and c.isdigit() and 1990 <= int(c) <= 2100), None)
+        try:
+            v = int(float(str(r.get("V", "")).replace(",", ".")))
+        except ValueError:
+            continue
+        if mun and ano:
+            out.setdefault(mun, {})[int(ano)] = v
+    return out
+
+
+def _uma_fonte(api, sidra):
+    """Tenta a API de agregados; se não responder, o SIDRA (outro servidor do IBGE)."""
     try:
-        censo = ler_ibge(http.get(config.IBGE_CENSO_2022, timeout=120).json())
+        r = ler_ibge(http.get(api, timeout=(20, 120)).json())
+        if r:
+            return r
+    except Exception:  # noqa: BLE001
+        pass
+    return ler_sidra(http.get(sidra, timeout=(20, 120)).json())
+
+
+def baixar_populacao() -> dict[str, dict[int, int]]:
+    pop = _uma_fonte(config.IBGE_ESTIMATIVA, config.SIDRA_ESTIMATIVA)
+    try:
+        censo = _uma_fonte(config.IBGE_CENSO_2022, config.SIDRA_CENSO_2022)
         for cod, s in censo.items():
             pop.setdefault(cod, {}).update(s)
     except Exception:  # noqa: BLE001 — o censo é complemento; sem ele vale a estimativa mais próxima
