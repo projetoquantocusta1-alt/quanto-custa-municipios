@@ -27,6 +27,7 @@ import unicodedata
 from datetime import date
 
 from coletor import tce
+from coletor.privacidade import mascarar_cpf_no_texto
 
 VERSAO = 2
 VERSOES_LEGIVEIS = (1, 2)   # o site ainda monta arquivos da versão 1 enquanto o robô não refaz
@@ -136,13 +137,13 @@ def _mes_empenhos(cod, ano, ref, alvo):
     for e in lst:
         org = _limpo(e.get("codigo_orgao"))
         tipo = _limpo(e.get("codigo_tipo_negociante"))
-        f = (_limpo(e.get("nome_negociante")), doc_publico(e.get("numero_documento_negociante"), tipo), tipo,
+        f = (mascarar_cpf_no_texto(_limpo(e.get("nome_negociante"))), doc_publico(e.get("numero_documento_negociante"), tipo), tipo,
              _limpo(e.get("municipio_negociante"), 60))
         if f not in idx:
             idx[f] = len(forn)
             forn.append(list(f))
         valor = _v(e.get("valor_empenhado"))
-        hist = _limpo(e.get("descricao_historico_empenho"))
+        hist = mascarar_cpf_no_texto(_limpo(e.get("descricao_historico_empenho")))
         if org in alvo:
             hist = hist[:1500]
         else:
@@ -192,7 +193,7 @@ def _itens(cod, ano, orgao):
     lst = tce.consultar("itens_notas_fiscais", {"codigo_municipio": cod, "exercicio_orcamento": tce.exercicio(ano),
                                                 "codigo_orgao": orgao})
     out = [[orgao, _d(i.get("data_emissao")), _limpo(i.get("numero_nota_empenho")), _limpo(i.get("numero_nota_fiscal"), 30),
-            int(_v(i.get("numero_item_sequencial"))), _limpo(i.get("descricao_item"), 300), _limpo(i.get("unidade_compra"), 20),
+            int(_v(i.get("numero_item_sequencial"))), mascarar_cpf_no_texto(_limpo(i.get("descricao_item"), 300)), _limpo(i.get("unidade_compra"), 20),
             _v(i.get("numero_quantidade_comprada")), _v(i.get("valor_unitario_item")), _v(i.get("valor_total_item")),
             _limpo(i.get("codigo_ncm"), 12)] for i in lst]
     return sorted(out, key=lambda x: (x[1], x[2], x[3], x[4]))
