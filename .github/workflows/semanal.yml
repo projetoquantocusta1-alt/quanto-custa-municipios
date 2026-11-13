@@ -1,0 +1,45 @@
+name: Eleitos, populacao e emendas
+
+on:
+  schedule:
+    - cron: "13 11 * * 0"    # todo domingo às 08:13 (horário de Brasília)
+  workflow_dispatch:
+    inputs:
+      so:
+        description: "Deixe em branco para tudo, ou: tse, ibge, emendas"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-municipios
+  cancel-in-progress: false
+
+jobs:
+  rodar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: TSE, IBGE e CGU
+        run: |
+          if [ -n "${{ github.event.inputs.so }}" ]; then python semanal.py --so "${{ github.event.inputs.so }}"; else python semanal.py; fi
+      - name: Publicar
+        if: always()
+        run: |
+          git config user.name  "robo-quanto-custa"
+          git config user.email "actions@users.noreply.github.com"
+          mkdir -p docs/dados dados_brutos
+          git add docs/dados dados_brutos
+          if ! git diff --cached --quiet; then
+            git commit -m "municipios: eleitos, populacao e emendas ($(date -u +%Y-%m-%d))"
+            git pull --rebase -X ours origin main || true
+            git push
+          fi
