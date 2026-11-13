@@ -1,0 +1,44 @@
+name: Atualizar municipios (TCE-CE)
+
+on:
+  schedule:
+    - cron: "37 9 * * *"     # todo dia às 06:37 (horário de Brasília)
+  workflow_dispatch:
+    inputs:
+      minutos:
+        description: "Limite de tempo da coleta, em minutos"
+        required: false
+        default: "300"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-municipios
+  cancel-in-progress: false
+
+jobs:
+  rodar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Coletar no TCE e montar o site
+        run: python atualizar.py --minutos "${{ github.event.inputs.minutos || '300' }}"
+      - name: Publicar
+        if: always()
+        run: |
+          git config user.name  "robo-quanto-custa"
+          git config user.email "actions@users.noreply.github.com"
+          mkdir -p docs/dados dados_brutos
+          git add docs/dados dados_brutos
+          if ! git diff --cached --quiet; then
+            git commit -m "municipios: dados de $(date -u +%Y-%m-%d)"
+            git pull --rebase -X ours origin main || true
+            git push
+          fi
