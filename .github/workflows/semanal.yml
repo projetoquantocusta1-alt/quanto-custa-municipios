@@ -31,6 +31,8 @@ jobs:
       - name: TSE, IBGE e CGU
         run: |
           if [ -n "${{ github.event.inputs.so }}" ]; then python semanal.py --so "${{ github.event.inputs.so }}"; else python semanal.py; fi
+          # remonta o site com a população, os eleitos e as emendas novos (sem consultar o TCE)
+          python atualizar.py --so-montar
       - name: Publicar
         if: always()
         run: |
