@@ -102,6 +102,10 @@ class Identificador:
         return achados.pop() if len(achados) == 1 else None
 
 
+def _brl(v: float) -> str:
+    return ("R$ " + f"{v:,.2f}").replace(",", "X").replace(".", ",").replace("X", ".")
+
+
 # ------------------------------------------------------------------ um município-ano
 def montar_ano(bruto: dict, eleitos: dict | None, pop: int | None) -> dict:
     ano = bruto["ano"]
@@ -194,6 +198,25 @@ def montar_ano(bruto: dict, eleitos: dict | None, pop: int | None) -> dict:
         if abs(o["gasto"]) < 0.01 and nt > 0:
             o["gasto"] = nt
             fonte[p] = "notas"
+    # divergências, sempre explicadas na página (a obrigação de informar o TCE é do órgão; nós só mostramos)
+    rot_org = {"camara": "Câmara Municipal", "prefeito": "Gabinete do Prefeito", "vice": "Gabinete do Vice-Prefeito"}
+    mes = f"{str(bruto['mes_ref'])[4:6]}/{str(bruto['mes_ref'])[:4]}" if bruto.get("mes_ref") else str(ano)
+    divergencias = []
+    for p, c in conferencia.items():
+        if p in fonte:
+            c["situacao"] = "sem_balancete"
+            divergencias.append({"orgao": p, "tipo": "sem_balancete", "texto":
+                f"{rot_org[p]}: o balancete de despesa de {ano} não foi enviado ao TCE-CE (dados disponíveis até {mes}). "
+                f"O valor mostrado ({_brl(c['notas'])}) é a soma das notas de empenho, menos anulações, que o próprio órgão "
+                f"registrou no TCE. Enviar o balancete é obrigação do órgão; quando ele chegar, o valor é conferido de novo."})
+        elif not c["ok"]:
+            c["situacao"] = "diferenca"
+            divergencias.append({"orgao": p, "tipo": "diferenca", "texto":
+                f"{rot_org[p]}: as notas de empenho registradas no TCE-CE somam {_brl(c['notas'])}, mas o balancete do "
+                f"próprio órgão informa {_brl(c['balancete'])} (diferença de {_brl(c['diferenca'])}). Mostramos o valor "
+                f"do balancete, que é a despesa oficial; a diferença precisa ser explicada pelo órgão."})
+        else:
+            c["situacao"] = "ok"
     n_ver = len((eleitos or {}).get("vereadores") or []) or None
     cam = orgao["camara"]
 
@@ -235,6 +258,7 @@ def montar_ano(bruto: dict, eleitos: dict | None, pop: int | None) -> dict:
         "teto_subsidio_vereador": teto,
         "pessoas": pessoas_saida,
         "conferencia": conferencia,
+        "divergencias": divergencias,
         "detalhe": bool(bruto.get("meses")),
     }
 
@@ -388,12 +412,14 @@ def resumo_linha(a: dict, emendas_ano: float) -> list:
             o["vice"]["gasto"], a["n_vereadores"], a["receita_total"], rc.get("uniao", 0.0), rc.get("estado", 0.0),
             rc.get("propria", 0.0), r2(emendas_ano), a["teto_subsidio_vereador"],
             o["camara"]["grupos"].get("pessoal", 0.0), o["camara"]["grupos"].get("diarias", 0.0),
-            int(all(c["ok"] for c in a["conferencia"].values())) if a["conferencia"] else None]
+            int(all(c["ok"] for c in a["conferencia"].values())) if a["conferencia"] else None,
+            (a["conferencia"].get("camara") or {}).get("situacao"), (a["conferencia"].get("camara") or {}).get("diferenca")]
 
 
 CAMPOS_RESUMO = ["mes_ref", "populacao", "gasto_total", "camara", "gab_prefeito", "gab_vice", "n_vereadores",
                  "receita_total", "transf_uniao", "transf_estado", "receita_propria", "emendas",
-                 "teto_subsidio_vereador", "camara_pessoal", "camara_diarias", "conferido"]
+                 "teto_subsidio_vereador", "camara_pessoal", "camara_diarias", "conferido",
+                 "situacao_camara", "diferenca_camara"]
 
 
 def pessoa_publica(p: dict | None) -> dict | None:

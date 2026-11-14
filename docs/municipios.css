@@ -25,3 +25,9 @@ main { padding: 20px; }
 #n-tab td.quebra, #pf-tab td.quebra { min-width: 200px; }
 #ficha-forn .kpi .val { font-size: 22px; }
 @media (max-width: 600px) { .notas-box .kpi .val, #m-pf-box .kpi .val { font-size: 16px; } #ff-corpo { padding: 14px !important; } .d-grade { grid-template-columns: 1fr; } }
+/* divergências: o que o órgão não enviou ou não fecha no TCE-CE */
+.divergencias { background: #FDF0EF; border: 1px solid #E3A6A0; border-left: 5px solid #C84C4C; border-radius: 10px; padding: 12px 16px; margin: 10px 0 14px; color: #4a1f1b; font-size: 14px; }
+.divergencias ul { margin: 6px 0 4px; padding-left: 18px; }
+.divergencias li { margin: 4px 0; line-height: 1.45; }
+.divergencias .sub { margin: 4px 0 0; color: #6b3a35; }
+.selo-conf.alerta { background: #FDF0EF; color: #8a2a22; border: 1px solid #E3A6A0; }
