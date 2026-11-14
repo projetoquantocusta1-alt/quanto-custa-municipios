@@ -143,12 +143,44 @@ function rPrefeitos() {
   (c, ls) => c.k === "nome" ? "Total" : ["gab_prefeito", "gab_vice", "gasto_total"].includes(c.k) ? curto(ls.reduce((s, l) => s + (l[c.k] || 0), 0)) : "");
 }
 
+
+/* divergências: o que o órgão não enviou ao TCE-CE ou o que não fecha (vem pronto do robô; se não vier, calcula aqui) */
+const ROT_ORG = { camara: "Câmara Municipal", prefeito: "Gabinete do Prefeito", vice: "Gabinete do Vice-Prefeito" };
+function divergenciasDe(a, ano) {
+  if (a.divergencias) return a.divergencias;
+  const out = [], mes = a.mes_ref ? `${String(a.mes_ref).slice(4, 6)}/${String(a.mes_ref).slice(0, 4)}` : ano;
+  Object.entries(a.conferencia || {}).forEach(([p, c]) => {
+    const semBal = (a.orgaos?.[p]?.fonte_gasto || "balancete") !== "balancete";
+    if (semBal) out.push({ orgao: p, tipo: "sem_balancete", texto: `${ROT_ORG[p]}: o balancete de despesa de ${ano} não foi enviado ao TCE-CE (dados disponíveis até ${mes}). O valor mostrado (${brl(c.notas, 2)}) é a soma das notas de empenho, menos anulações, que o próprio órgão registrou no TCE. Enviar o balancete é obrigação do órgão; quando ele chegar, o valor é conferido de novo.` });
+    else if (!c.ok) out.push({ orgao: p, tipo: "diferenca", texto: `${ROT_ORG[p]}: as notas de empenho registradas no TCE-CE somam ${brl(c.notas, 2)}, mas o balancete do próprio órgão informa ${brl(c.balancete, 2)} (diferença de ${brl(c.diferenca, 2)}). Mostramos o valor do balancete, que é a despesa oficial; a diferença precisa ser explicada pelo órgão.` });
+  });
+  return out;
+}
+// situação da câmara para a lista: do resumo (robô novo) ou do arquivo do município (busca só os que não conferem)
+E.sitCam = {};
+function situacaoCamara(m, l) {
+  if (l.situacao_camara) return { s: l.situacao_camara, d: l.diferenca_camara };
+  if (l.conferido !== 0) return { s: l.conferido ? "ok" : null };
+  const k = m.sim + "-" + E.ano;
+  if (k in E.sitCam) return E.sitCam[k];
+  E.sitCam[k] = { s: null };
+  (E.det[m.sim] ? Promise.resolve(E.det[m.sim]) : jsonOuNada(`dados/m/${m.sim}.json`)).then((D) => {
+    if (!D) return; E.det[m.sim] = D;
+    const a = D.anos[E.ano], c = a?.conferencia?.camara;
+    if (!c) return;
+    E.sitCam[k] = (a.orgaos.camara.fonte_gasto || "balancete") !== "balancete" ? { s: "sem_balancete", d: c.diferenca } : c.ok ? { s: "ok" } : { s: "diferenca", d: c.diferenca };
+    clearTimeout(E._rc); E._rc = setTimeout(() => { if (E.pag === "camaras") rCamaras(); }, 150);
+  });
+  return E.sitCam[k];
+}
+
 function rCamaras() {
   const q = semAcento($("#c-busca").value);
   const L = linhasDoAno().map(([m, l]) => ({ ...l, m, nome: m.nome })).filter(l => !q || semAcento(l.nome).includes(q));
   const soma = k => L.reduce((s, l) => s + (l[k] || 0), 0);
-  const semBal = linhasDoAno().filter(([, l]) => l.situacao_camara === "sem_balancete").map(([m]) => titulo(m.nome));
-  const difs = linhasDoAno().filter(([, l]) => l.situacao_camara === "diferenca").map(([m, l]) => `${titulo(m.nome)} (${brl(l.diferenca_camara)})`);
+  const sits = linhasDoAno().map(([m, l]) => [m, situacaoCamara(m, l)]);
+  const semBal = sits.filter(([, x]) => x.s === "sem_balancete").map(([m]) => titulo(m.nome));
+  const difs = sits.filter(([, x]) => x.s === "diferenca").map(([m, x]) => `${titulo(m.nome)} (${brl(x.d)})`);
   $("#c-diverg").hidden = !(semBal.length || difs.length);
   $("#c-diverg").innerHTML = `<strong>Atenção: informações que as câmaras não enviaram ou que não fecham no TCE-CE (${E.ano})</strong><ul>${
     semBal.length ? `<li class="sem_balancete"><b>Sem balancete de despesa enviado ao TCE-CE:</b> ${esc(semBal.join(", "))}. Para essas câmaras, o gasto mostrado é a soma das notas de empenho que elas mesmas registraram. Enviar o balancete é obrigação de cada câmara.</li>` : ""}${
@@ -164,9 +196,10 @@ function rCamaras() {
     { k: "camHab", t: "Por habitante", num: 1, f: l => brl(l.camHab, 2) },
     { k: "camRec", t: "% da receita", num: 1, f: l => pct(l.camRec) },
     { k: "teto_subsidio_vereador", t: "Teto do salário", num: 1, f: l => brl(l.teto_subsidio_vereador) },
-    { k: "conferido", t: "Conferido", f: l => l.situacao_camara === "sem_balancete" ? '<span class="selo-conf alerta" title="A câmara não enviou o balancete do ano ao TCE-CE; valor pela soma das notas de empenho">sem balancete</span>'
-        : l.situacao_camara === "diferenca" ? `<span class="selo-conf nao" title="Notas de empenho e balancete não batem">diferença de ${brl(l.diferenca_camara)}</span>`
-        : l.conferido ? '<span class="selo-conf ok">sim</span>' : l.conferido === 0 ? '<span class="selo-conf nao">diferença</span>' : "—" },
+    { k: "conferido", t: "Conferido", f: l => { const x = situacaoCamara(l.m, l);
+        return x.s === "sem_balancete" ? '<span class="selo-conf alerta" title="A câmara não enviou o balancete do ano ao TCE-CE; valor pela soma das notas de empenho">sem balancete</span>'
+          : x.s === "diferenca" ? `<span class="selo-conf nao" title="Notas de empenho e balancete não batem">diferença de ${brl(x.d)}</span>`
+          : l.conferido ? '<span class="selo-conf ok">sim</span>' : l.conferido === 0 ? '<span class="selo-conf nao">diferença</span>' : "—"; } },
   ], L, E.ordC, o => { E.ordC = o; rCamaras(); }, E.limC, "#c-mais",
   (c, ls) => c.k === "nome" ? "Total" : c.k === "camara" ? curto(ls.reduce((s, l) => s + (l.camara || 0), 0)) : c.k === "n_vereadores" ? num(ls.reduce((s, l) => s + (l.n_vereadores || 0), 0)) : "");
 }
@@ -186,7 +219,7 @@ async function rMunicipio() {
   const f = fator(E.ano), x = y => y == null ? null : y * f;
   const cam = a.orgaos.camara, pre = a.orgaos.prefeito, vic = a.orgaos.vice;
   $("#m-sub").textContent = `${num(a.populacao)} habitantes · dados até ${mesRef(a.mes_ref)}${a.fechado ? "" : " (ano em andamento)"}`;
-  const dv = a.divergencias || [];
+  const dv = divergenciasDe(a, E.ano);
   $("#m-diverg").hidden = !dv.length;
   $("#m-diverg").innerHTML = dv.length ? `<strong>Atenção: dados incompletos ou divergentes no TCE-CE (${E.ano})</strong><ul>${dv.map(d => `<li class="${d.tipo}">${esc(d.texto)}</li>`).join("")}</ul>
     <p class="sub">Os números deste site vêm do que cada prefeitura e câmara informa ao Tribunal de Contas. Quando a informação falta ou não fecha, avisamos aqui.</p>` : "";
@@ -212,6 +245,12 @@ async function rMunicipio() {
   $("#m-conf-cam").textContent = cam.fonte_gasto && cam.fonte_gasto !== "balancete" ? "soma das notas de empenho: a câmara ainda não enviou o balancete do ano ao TCE"
     : conf ? (conf.ok ? "notas conferidas com o balancete" : `diferença de ${brl(conf.diferenca)} entre notas e balancete`) : "";
   const g = Object.entries(cam.grupos).sort((p, q) => q[1] - p[1]);
+  const semGrupos = !g.length && cam.gasto > 0;
+  $("#g-camara").parentElement.hidden = semGrupos;
+  let gsem = $("#g-camara-sem");
+  if (!gsem) { gsem = document.createElement("p"); gsem.id = "g-camara-sem"; gsem.className = "sub"; $("#g-camara").parentElement.after(gsem); }
+  gsem.hidden = !semGrupos;
+  gsem.textContent = "A divisão do gasto por tipo de despesa vem do balancete, que esta câmara ainda não enviou ao TCE-CE. Veja abaixo cada nota de empenho.";
   grafico("g-camara", { type: "bar", data: { labels: g.map(([k]) => NOMES_GRUPO[k] || k), datasets: [{ data: g.map(([, y]) => x(y)), backgroundColor: "#118dff" }] }, options: opBarra(true) });
   // vereadores
   const vers = (md?.vereadores || []).map((p, i) => ({ p, pe: a.pessoas["v" + i] }));
