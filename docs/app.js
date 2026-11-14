@@ -230,6 +230,30 @@ async function rMunicipio() {
     ["Receita do ano", curto(x(a.receita_total)), `emendas: ${curto(x(a.emendas_total))}`],
     ["Teto do salário do vereador", brl(a.teto_subsidio_vereador), "por mês, pela Constituição"],
   ]);
+  let bc = $("#m-card");
+  if (!bc) { bc = document.createElement("p"); bc.className = "sub"; bc.innerHTML = '<button class="btn" id="m-card" type="button">Gerar imagem para compartilhar</button>'; $("#m-kpis").after(bc); bc = $("#m-card"); }
+  bc.onclick = () => {
+    const L = linhasDoAno().filter(([, l]) => l.porVer), ord = L.slice().sort((p, q) => q[1].porVer - p[1].porVer), n = ord.length;
+    const pos = ord.findIndex(([m]) => m.sim === E.sim) + 1, caro = pos && pos <= Math.ceil(n / 2);
+    const dvs = divergenciasDe(a, E.ano), dvC = dvs.find((d) => d.orgao === "camara");
+    const destaques = [];
+    if (dvC) destaques.push([dvC.tipo === "sem_balancete" ? "Atenção: a câmara não enviou o balancete ao TCE-CE" : "Atenção: notas e balancete da câmara não batem",
+      dvC.tipo === "sem_balancete" ? "valor pela soma das notas de empenho que a própria câmara registrou" : `diferença de ${brl(a.conferencia.camara.diferenca)}`, "#c4161c"]);
+    if (a.n_vereadores) destaques.push([`${curto(x(a.camara_por_vereador))} por vereador no ano`, `câmara inteira ÷ ${a.n_vereadores} vereadores eleitos`, "#118dff"]);
+    destaques.push([`Gabinete do prefeito e do vice: ${curto(x(pre.gasto + vic.gasto))}`, "órgão inteiro da prefeitura, não é o salário do prefeito", "#107c41"]);
+    const pes = x(cam.grupos?.pessoal || 0), dia = x(cam.grupos?.diarias || 0), out = Math.max(0, x(cam.gasto) - pes - dia);
+    CartaoQC.abrir({
+      titulo: `Câmara Municipal · ${E.ano}${a.fechado ? "" : " (até " + mesRef(a.mes_ref) + ")"}`,
+      nome: titulo(D.nome), semFoto: true,
+      linhas: [`${num(a.populacao)} habitantes · Ceará`, a.n_vereadores ? `${a.n_vereadores} vereadores` : ""],
+      faixa: pos ? { titulo: pos === 1 ? "Câmara mais cara por vereador" : caro ? `${pos}ª mais cara por vereador` : `${n - pos + 1}ª mais econômica por vereador`, sub: `entre ${n} câmaras do Ceará · em ${E.ano}`, cor: caro ? "#c4161c" : "#107c41" } : null,
+      valorRot: "A câmara custou aos cofres públicos", valor: x(cam.gasto), valorSub: a.populacao ? `${brl(x(cam.gasto) / a.populacao, 2)} por habitante` : "",
+      destaques,
+      composicao: pes || dia ? [["Pessoal", pes, "#14283F"], ["Diárias e passagens", dia, "#D69A32"], ["Outras despesas", out, "#2475B8"]] : [],
+      fonte: `Fonte: TCE-CE (dados abertos do SIM)${$("#f-ipca").checked ? " · valores corrigidos pelo IPCA" : ""}`,
+      arquivo: `camara-${semAcento(D.nome).replace(/\W+/g, "-")}-${E.ano}`,
+    });
+  };
   // prefeito e vice
   const md = D.mandatos[a.eleicao];
   $("#m-mandato").textContent = md ? `mandato ${md.periodo[0]}–${md.periodo[1]}` : "";
