@@ -197,7 +197,8 @@ async function rMunicipio() {
   // câmara
   const conf = a.conferencia.camara;
   $("#m-conf-cam").className = "selo-conf " + (conf?.ok ? "ok" : "nao");
-  $("#m-conf-cam").textContent = conf ? (conf.ok ? "notas conferidas com o balancete" : `diferença de ${brl(conf.diferenca)} entre notas e balancete`) : "";
+  $("#m-conf-cam").textContent = cam.fonte_gasto && cam.fonte_gasto !== "balancete" ? "soma das notas de empenho: a câmara ainda não enviou o balancete do ano ao TCE"
+    : conf ? (conf.ok ? "notas conferidas com o balancete" : `diferença de ${brl(conf.diferenca)} entre notas e balancete`) : "";
   const g = Object.entries(cam.grupos).sort((p, q) => q[1] - p[1]);
   grafico("g-camara", { type: "bar", data: { labels: g.map(([k]) => NOMES_GRUPO[k] || k), datasets: [{ data: g.map(([, y]) => x(y)), backgroundColor: "#118dff" }] }, options: opBarra(true) });
   // vereadores

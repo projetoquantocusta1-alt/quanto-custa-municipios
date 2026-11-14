@@ -186,6 +186,14 @@ def montar_ano(bruto: dict, eleitos: dict | None, pop: int | None) -> dict:
         conferencia[p] = {"balancete": r2(bal), "notas": r2(notas), "diferenca": r2(dif),
                           "ok": abs(dif) <= max(1.0, abs(bal) * 0.005)}
 
+    # o órgão ainda não mandou o balancete do ano ao TCE, mas as notas de empenho já estão lá
+    # (ex.: câmaras de Moraújo e Tianguá em 2026): usa a soma das notas, para não mostrar R$ 0
+    fonte = {}
+    for p, o in orgao.items():
+        nt = (conferencia.get(p) or {}).get("notas") or 0.0
+        if abs(o["gasto"]) < 0.01 and nt > 0:
+            o["gasto"] = nt
+            fonte[p] = "notas"
     n_ver = len((eleitos or {}).get("vereadores") or []) or None
     cam = orgao["camara"]
 
@@ -202,6 +210,7 @@ def montar_ano(bruto: dict, eleitos: dict | None, pop: int | None) -> dict:
             "codigos": pap.get(p, []),
             "nomes": [bruto["orgaos"].get(c, ["", ""])[0] for c in pap.get(p, [])],
             "gasto": r2(o["gasto"]), "pago": r2(o["pago"]),
+            "fonte_gasto": "notas de empenho (balancete do ano ainda não enviado ao TCE)" if p in fonte else "balancete",
             "grupos": {k: r2(v) for k, v in o["grupos"].items() if abs(v) >= 0.01},
             "elementos": {k: r2(v) for k, v in sorted(o["elementos"].items(), key=lambda x: -x[1]) if abs(v) >= 0.01},
             "fornecedores": tf, "n_fornecedores": n_forn,
