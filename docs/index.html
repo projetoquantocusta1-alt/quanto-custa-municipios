@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Projeto Quanto Custa — Prefeitos e vereadores do Ceará</title>
-<link rel="icon" href="https://quantocustaum.com/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="marca/favicon.svg" type="image/svg+xml">
 <meta property="og:title" content="Projeto Quanto Custa — Prefeitos e vereadores do Ceará">
 <meta property="og:description" content="Projeto Quanto Custa: quanto custam as câmaras municipais, os gabinetes dos prefeitos e as prefeituras dos 184 municípios do Ceará desde 2017 — dados oficiais do TCE-CE, TSE, IBGE e CGU, atualizados todo dia.">
 <meta property="og:image" content="https://quantocustaum.com/og.png">
@@ -15,14 +15,16 @@
 <meta name="description" content="Projeto Quanto Custa: quanto custam as câmaras municipais, os gabinetes dos prefeitos e as prefeituras dos 184 municípios do Ceará desde 2017 — dados oficiais do TCE-CE, TSE, IBGE e CGU, atualizados todo dia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2">
-<link rel="stylesheet" href="tema.css?v=5">
-<link rel="stylesheet" href="municipios.css?v=4">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="tema.css?v=6">
+<link rel="stylesheet" href="municipios.css?v=5">
+<link rel="stylesheet" href="marca/tokens.css?v=1">
+<link rel="stylesheet" href="marca/marca.css?v=1">
 </head>
 <body>
 <aside class="menu" id="menu" aria-label="Menu">
-  <a class="marca" href="https://quantocustaum.com/" title="Voltar ao início do Projeto Quanto Custa"><span class="logo" aria-hidden="true">R$</span><div><strong>Projeto Quanto Custa</strong><small class="marca-sub">Prefeitos e vereadores · CE</small></div></a>
+  <a class="marca" href="https://quantocustaum.com/" title="Voltar ao início do Projeto Quanto Custa"><span class="marca-col"><img class="marca-logo" src="marca/logo-horizontal-negativo.svg" alt="Quanto Custa?" width="164" height="30"><small class="marca-sub">Prefeitos e vereadores · CE</small></span></a>
   <nav>
     <a class="hub-link" href="https://quantocustaum.com/" title="Voltar ao início do Projeto Quanto Custa">← Todas as esferas</a>
     <button data-pag="inicio"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
@@ -38,7 +40,7 @@
 <div class="conteudo">
   <header class="topo-movel">
     <button class="hamburguer" id="abrir-menu" aria-label="Abrir menu" aria-controls="menu" aria-expanded="false"><span></span><span></span><span></span></button>
-    <strong>Quanto custa · Municípios do CE</strong>
+    <span class="topo-marca"><img class="marca-logo" src="marca/logo-horizontal-negativo.svg" alt="Quanto Custa?" width="131" height="24"><small>Prefeitos e vereadores · CE</small></span>
     <a class="hub-link topo" href="https://quantocustaum.com/">← Início</a>
   </header>
 
@@ -193,8 +195,8 @@
 <dialog id="ficha-forn" aria-label="Ficha do fornecedor"><button class="fechar" id="ff-fechar" type="button" aria-label="Fechar">×</button><div id="ff-corpo" style="padding:22px"></div></dialog>
 <script src="vendor/chart.umd.js"></script>
 <script src="boasvindas.js?v=1" data-site="m"></script>
-<script src="cartao.js?v=4"></script>
-<script src="app.js?v=7"></script>
+<script src="cartao.js?v=5"></script>
+<script src="app.js?v=8"></script>
 <!-- contador de visitas sem cookies e sem dados pessoais (GoatCounter) -->
 <script data-goatcounter="https://quantocustaum.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script>/* número de visitas: selo no topo (ou no rodapé, se a página não tiver selo); some se o GoatCounter não responder */

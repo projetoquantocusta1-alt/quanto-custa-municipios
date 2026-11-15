@@ -249,7 +249,7 @@ async function rMunicipio() {
       faixa: pos ? { titulo: pos === 1 ? "Câmara mais cara por vereador" : caro ? `${pos}ª mais cara por vereador` : `${n - pos + 1}ª mais econômica por vereador`, sub: `entre ${n} câmaras do Ceará · em ${E.ano}`, cor: caro ? "#c4161c" : "#107c41" } : null,
       valorRot: "A câmara custou aos cofres públicos", valor: x(cam.gasto), valorSub: a.populacao ? `${brl(x(cam.gasto) / a.populacao, 2)} por habitante` : "",
       destaques,
-      composicao: pes || dia ? [["Pessoal", pes, "#14283F"], ["Diárias e passagens", dia, "#D69A32"], ["Outras despesas", out, "#2475B8"]] : [],
+      composicao: pes || dia ? [["Pessoal", pes, "#10243A"], ["Diárias e passagens", dia, "#D69A32"], ["Outras despesas", out, "#2463A6"]] : [],
       fonte: `Fonte: TCE-CE (dados abertos do SIM)${$("#f-ipca").checked ? " · valores corrigidos pelo IPCA" : ""}`,
       arquivo: `camara-${semAcento(D.nome).replace(/\W+/g, "-")}-${E.ano}`,
     });
