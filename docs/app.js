@@ -47,7 +47,8 @@ function linha(m, ano = E.ano) {
   const o = {}; E.meta._campos.forEach((c, i) => o[c] = l[i]);
   const f = fator(ano);
   for (const k of ["gasto_total", "camara", "gab_prefeito", "gab_vice", "receita_total", "transf_uniao", "transf_estado",
-    "receita_propria", "emendas", "camara_pessoal", "camara_diarias"]) o[k] = o[k] == null ? null : o[k] * f;
+    "receita_propria", "emendas", "camara_pessoal", "camara_diarias", "camara_pago"]) o[k] = o[k] == null ? null : o[k] * f;
+  o.camAPagar = o.camara_pago == null ? null : Math.max(0, (o.camara || 0) - o.camara_pago);
   o.gab = (o.gab_prefeito || 0) + (o.gab_vice || 0);
   o.porVer = o.n_vereadores ? o.camara / o.n_vereadores : null;
   o.camHab = o.populacao ? o.camara / o.populacao : null;
@@ -85,9 +86,6 @@ function render() {
   ({ inicio: rInicio, prefeitos: rPrefeitos, camaras: rCamaras, municipio: rMunicipio, metodo: () => {} })[E.pag]();
 }
 
-// parte da câmara empenhada mas ainda não paga (só em ano em andamento e com balancete enviado)
-const aPagar = (a) => { const c = a?.orgaos?.camara;
-  return !a || a.fechado || !c || (c.fonte_gasto || "balancete") !== "balancete" || !(c.pago > 0) ? 0 : Math.max(0, c.gasto - c.pago); };
 function kpis(el, itens) {
   $(el).innerHTML = itens.map(([rot, val, obs]) => `<div class="kpi"><div class="rot">${rot}</div><div class="val num">${val}</div>${obs ? `<div class="obs">${obs}</div>` : ""}</div>`).join("");
 }
@@ -190,10 +188,13 @@ function rCamaras() {
     difs.length ? `<li class="diferenca"><b>Notas de empenho e balancete não batem:</b> ${esc(difs.join(", "))}. Mostramos o valor do balancete (a despesa oficial); a diferença precisa ser explicada pela câmara.</li>` : ""}</ul>`;
   kpis("#c-kpis", [["Gasto das câmaras", curto(soma("camara")), `${L.length} câmaras`],
     ["Vereadores eleitos", num(soma("n_vereadores"))], ["Custo médio por vereador", curto(soma("camara") / (soma("n_vereadores") || NaN))],
-    ["Diárias e passagens", curto(soma("camara_diarias"))]]);
+    ["Diárias e passagens", curto(soma("camara_diarias"))],
+    ["Já pago", curto(soma("camara_pago")), `ainda a pagar: <b>${curto(soma("camAPagar"))}</b>${L.some(l => l.camara_pago == null) ? " · sem as câmaras que não mandaram o balancete" : ""}`]]);
   tabela("#c-tab", [
     { k: "nome", t: "Município", f: linkMun },
     { k: "camara", t: "Gasto da câmara", num: 1, f: l => curto(l.camara) },
+    { k: "camara_pago", t: "Pago", num: 1, f: l => l.camara_pago == null ? '<span class="sub" title="Sem balancete: o TCE não tem o valor pago">—</span>' : curto(l.camara_pago) },
+    { k: "camAPagar", t: "A pagar", num: 1, f: l => l.camAPagar == null ? "—" : l.camAPagar > 0.5 ? `<span class="a-pagar">${curto(l.camAPagar)}</span>` : "0" },
     { k: "n_vereadores", t: "Vereadores", num: 1, f: l => num(l.n_vereadores) },
     { k: "porVer", t: "Por vereador (ano)", num: 1, f: l => curto(l.porVer) },
     { k: "camHab", t: "Por habitante", num: 1, f: l => brl(l.camHab, 2) },
@@ -204,7 +205,7 @@ function rCamaras() {
           : x.s === "diferenca" ? `<span class="selo-conf nao" title="Notas de empenho e balancete não batem">diferença de ${brl(x.d)}</span>`
           : l.conferido ? '<span class="selo-conf ok">sim</span>' : l.conferido === 0 ? '<span class="selo-conf nao">diferença</span>' : "—"; } },
   ], L, E.ordC, o => { E.ordC = o; rCamaras(); }, E.limC, "#c-mais",
-  (c, ls) => c.k === "nome" ? "Total" : c.k === "camara" ? curto(ls.reduce((s, l) => s + (l.camara || 0), 0)) : c.k === "n_vereadores" ? num(ls.reduce((s, l) => s + (l.n_vereadores || 0), 0)) : "");
+  (c, ls) => c.k === "nome" ? "Total" : c.k === "camara" ? curto(ls.reduce((s, l) => s + (l.camara || 0), 0)) : c.k === "camara_pago" || c.k === "camAPagar" ? curto(ls.reduce((s, l) => s + (l[c.k] || 0), 0)) : c.k === "n_vereadores" ? num(ls.reduce((s, l) => s + (l.n_vereadores || 0), 0)) : "");
 }
 
 /* --------------------------------------------------------------- município */
@@ -228,16 +229,26 @@ async function rMunicipio() {
     <p class="sub">Os números deste site vêm do que cada prefeitura e câmara informa ao Tribunal de Contas. Quando a informação falta ou não fecha, avisamos aqui.</p>` : "";
   kpis("#m-kpis", [
     ["Câmara municipal", curto(x(cam.gasto)), (a.n_vereadores ? `${a.n_vereadores} vereadores · ${curto(x(a.camara_por_vereador))} por vereador` : "")
-      + (aPagar(a) > 0 ? ` · pago até agora: ${curto(x(cam.pago))}` : "")],
+],
     ["Gabinete do prefeito + vice", curto(x(pre.gasto + vic.gasto))],
     ["Gasto total da prefeitura", curto(x(a.gasto_total)), a.populacao ? brl(x(a.gasto_total) / a.populacao) + " por habitante" : ""],
     ["Receita do ano", curto(x(a.receita_total)), `emendas: ${curto(x(a.emendas_total))}`],
     ["Teto do salário do vereador", brl(a.teto_subsidio_vereador), "por mês, pela Constituição"],
   ]);
-  let ep = $("#m-empenho");
-  if (!ep) { ep = document.createElement("p"); ep.id = "m-empenho"; ep.className = "aviso-empenho"; $("#m-kpis").after(ep); }
-  ep.hidden = !(aPagar(a) > 0);
-  if (aPagar(a) > 0) ep.innerHTML = `<b>Empenhado não é o mesmo que pago.</b> O valor da câmara é o <b>empenhado</b>: o dinheiro já reservado no orçamento para uma despesa. Contratos e folha costumam ser empenhados de uma vez, no começo do ano, e pagos mês a mês. Em ${E.ano}, até ${mesRef(a.mes_ref)}: empenhado ${brl(x(cam.gasto))}, pago ${brl(x(cam.pago))}, <b>ainda a pagar ${brl(x(aPagar(a)))}</b>. Quando o ano fecha, os dois ficam quase iguais (o que não for usado é anulado).`;
+  // empenhado, pago e a pagar: câmara, gabinetes e prefeitura inteira
+  const comPago = (o) => o && (o.fonte_gasto || "balancete") === "balancete";
+  const linhasEP = [["Câmara municipal", cam.gasto, comPago(cam) ? cam.pago : null],
+    ["Gabinete do prefeito + vice", pre.gasto + vic.gasto, comPago(pre) && comPago(vic) ? pre.pago + vic.pago : null],
+    ["Prefeitura inteira (todos os órgãos)", a.gasto_total, a.pago_total || null]];
+  $("#m-empenho").innerHTML = `<header><h2>Empenhado, pago e a pagar em ${E.ano}</h2><span class="dica">até ${mesRef(a.mes_ref)}${a.fechado ? " · ano fechado" : " · ano em andamento"}</span></header>
+    <div class="ep-lista">${linhasEP.map(([rot, emp, pg]) => { const ap = pg == null ? null : Math.max(0, emp - pg), w = emp > 0 && pg != null ? Math.min(100, 100 * pg / emp) : 0;
+      return `<div class="ep-linha"><div class="ep-rot">${rot}</div>
+        <div class="ep-nums"><div><span>Empenhado</span><b>${brl(x(emp))}</b></div><div><span>Pago</span><b>${pg == null ? "não informado" : brl(x(pg))}</b></div>
+          <div class="ep-falta"><span>${a.fechado ? "Ficou a pagar" : "Falta pagar"}</span><b>${ap == null ? "—" : brl(x(ap))}</b></div></div>
+        ${pg == null ? `<p class="sub">Sem o balancete no TCE-CE, não há o valor pago.</p>` : `<div class="ep-barra" role="img" aria-label="${pct(pg / (emp || 1))} pago"><i style="width:${w}%"></i></div><p class="sub">${pct(pg / (emp || 1))} do empenhado já foi pago${pg > emp ? " (o pago inclui despesas de anos anteriores)" : ""}</p>`}</div>`; }).join("")}</div>
+    <p class="sub"><b>Empenhado</b> é o dinheiro já reservado no orçamento para uma despesa; é o valor usado no resto do site. <b>Pago</b> é o que já saiu do caixa. ${a.fechado
+      ? "No ano fechado, o que ficou a pagar passa para o ano seguinte como “restos a pagar”."
+      : "Contratos e folha costumam ser empenhados de uma vez, no começo do ano, e pagos mês a mês; por isso, durante o ano, o empenhado fica acima do pago."}</p>`;
   let bc = $("#m-card");
   if (!bc) { bc = document.createElement("p"); bc.className = "sub"; bc.innerHTML = '<button class="btn" id="m-card" type="button">Gerar imagem para compartilhar</button>'; $("#m-kpis").after(bc); bc = $("#m-card"); }
   bc.onclick = () => {
