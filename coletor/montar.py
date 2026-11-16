@@ -413,13 +413,17 @@ def resumo_linha(a: dict, emendas_ano: float) -> list:
             rc.get("propria", 0.0), r2(emendas_ano), a["teto_subsidio_vereador"],
             o["camara"]["grupos"].get("pessoal", 0.0), o["camara"]["grupos"].get("diarias", 0.0),
             int(all(c["ok"] for c in a["conferencia"].values())) if a["conferencia"] else None,
-            (a["conferencia"].get("camara") or {}).get("situacao"), (a["conferencia"].get("camara") or {}).get("diferenca")]
+            (a["conferencia"].get("camara") or {}).get("situacao"), (a["conferencia"].get("camara") or {}).get("diferenca"),
+            o["camara"].get("pago", 0.0) if (o["camara"].get("fonte_gasto") or "balancete") == "balancete" else None]
 
 
 CAMPOS_RESUMO = ["mes_ref", "populacao", "gasto_total", "camara", "gab_prefeito", "gab_vice", "n_vereadores",
                  "receita_total", "transf_uniao", "transf_estado", "receita_propria", "emendas",
                  "teto_subsidio_vereador", "camara_pessoal", "camara_diarias", "conferido",
-                 "situacao_camara", "diferenca_camara"]
+                 "situacao_camara", "diferenca_camara", "camara_pago"]
+# camara_pago: pago no ano pelo balancete (None se a câmara não mandou o balancete). Num ano em andamento,
+# contratos e folha costumam ser empenhados de uma vez para o ano todo e pagos aos poucos: o empenhado
+# corre na frente do pago. A previsão do ano (site principal) usa o ritmo do pago, não do empenhado.
 
 
 def pessoa_publica(p: dict | None) -> dict | None:

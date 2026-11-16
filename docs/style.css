@@ -466,3 +466,6 @@ tfoot .linha-total td { border-top: 2px solid var(--line-2); background: var(--p
 /* caixas de escolha e busca nunca mais largas que a tela (opções com nomes longos estouravam no celular) */
 select, input { max-width: 100%; }
 .filtros-tabela select, .filtros-tabela input { min-width: 0; }
+
+/* empenhado x pago no ano em andamento */
+.aviso-empenho { background: #EEF4FB; border: 1px solid #B9D0EA; border-left: 5px solid #2463A6; border-radius: 10px; padding: 10px 14px; font-size: 14px; line-height: 1.5; margin: 0 0 12px; color: #10243A; }

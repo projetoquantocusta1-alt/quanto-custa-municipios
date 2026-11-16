@@ -85,6 +85,9 @@ function render() {
   ({ inicio: rInicio, prefeitos: rPrefeitos, camaras: rCamaras, municipio: rMunicipio, metodo: () => {} })[E.pag]();
 }
 
+// parte da câmara empenhada mas ainda não paga (só em ano em andamento e com balancete enviado)
+const aPagar = (a) => { const c = a?.orgaos?.camara;
+  return !a || a.fechado || !c || (c.fonte_gasto || "balancete") !== "balancete" || !(c.pago > 0) ? 0 : Math.max(0, c.gasto - c.pago); };
 function kpis(el, itens) {
   $(el).innerHTML = itens.map(([rot, val, obs]) => `<div class="kpi"><div class="rot">${rot}</div><div class="val num">${val}</div>${obs ? `<div class="obs">${obs}</div>` : ""}</div>`).join("");
 }
@@ -224,12 +227,17 @@ async function rMunicipio() {
   $("#m-diverg").innerHTML = dv.length ? `<strong>Atenção: dados incompletos ou divergentes no TCE-CE (${E.ano})</strong><ul>${dv.map(d => `<li class="${d.tipo}">${esc(d.texto)}</li>`).join("")}</ul>
     <p class="sub">Os números deste site vêm do que cada prefeitura e câmara informa ao Tribunal de Contas. Quando a informação falta ou não fecha, avisamos aqui.</p>` : "";
   kpis("#m-kpis", [
-    ["Câmara municipal", curto(x(cam.gasto)), a.n_vereadores ? `${a.n_vereadores} vereadores · ${curto(x(a.camara_por_vereador))} por vereador` : ""],
+    ["Câmara municipal", curto(x(cam.gasto)), (a.n_vereadores ? `${a.n_vereadores} vereadores · ${curto(x(a.camara_por_vereador))} por vereador` : "")
+      + (aPagar(a) > 0 ? ` · pago até agora: ${curto(x(cam.pago))}` : "")],
     ["Gabinete do prefeito + vice", curto(x(pre.gasto + vic.gasto))],
     ["Gasto total da prefeitura", curto(x(a.gasto_total)), a.populacao ? brl(x(a.gasto_total) / a.populacao) + " por habitante" : ""],
     ["Receita do ano", curto(x(a.receita_total)), `emendas: ${curto(x(a.emendas_total))}`],
     ["Teto do salário do vereador", brl(a.teto_subsidio_vereador), "por mês, pela Constituição"],
   ]);
+  let ep = $("#m-empenho");
+  if (!ep) { ep = document.createElement("p"); ep.id = "m-empenho"; ep.className = "aviso-empenho"; $("#m-kpis").after(ep); }
+  ep.hidden = !(aPagar(a) > 0);
+  if (aPagar(a) > 0) ep.innerHTML = `<b>Empenhado não é o mesmo que pago.</b> O valor da câmara é o <b>empenhado</b>: o dinheiro já reservado no orçamento para uma despesa. Contratos e folha costumam ser empenhados de uma vez, no começo do ano, e pagos mês a mês. Em ${E.ano}, até ${mesRef(a.mes_ref)}: empenhado ${brl(x(cam.gasto))}, pago ${brl(x(cam.pago))}, <b>ainda a pagar ${brl(x(aPagar(a)))}</b>. Quando o ano fecha, os dois ficam quase iguais (o que não for usado é anulado).`;
   let bc = $("#m-card");
   if (!bc) { bc = document.createElement("p"); bc.className = "sub"; bc.innerHTML = '<button class="btn" id="m-card" type="button">Gerar imagem para compartilhar</button>'; $("#m-kpis").after(bc); bc = $("#m-card"); }
   bc.onclick = () => {
