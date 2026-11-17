@@ -217,6 +217,18 @@ def montar_ano(bruto: dict, eleitos: dict | None, pop: int | None) -> dict:
                 f"do balancete, que é a despesa oficial; a diferença precisa ser explicada pelo órgão."})
         else:
             c["situacao"] = "ok"
+    # a prefeitura (secretarias, fundos, gabinetes) não aparece com despesa no ano, só a câmara: o balancete do
+    # Poder Executivo ainda não está no TCE-CE (ex.: Eusébio e Paraipaba em 2026). O "gasto total" seria só a
+    # câmara; por isso fica em branco, com o aviso, em vez de um número enganoso.
+    orgs_cam = set(pap.get("camara") or [])
+    resto = sum(v for o, v in bal_por_orgao.items() if o not in orgs_cam)
+    sem_executivo = orgao["camara"]["gasto"] > 0 and resto < 0.01 * max(total, 1.0) + 1.0
+    if sem_executivo:
+        divergencias.append({"orgao": "prefeitura", "tipo": "sem_balancete", "texto":
+            f"Prefeitura: o balancete de despesa de {ano} dos órgãos da prefeitura (secretarias, fundos e gabinetes) "
+            f"não está no TCE-CE (dados disponíveis até {mes}); só o da câmara. Por isso o gasto total da prefeitura e "
+            f"os gabinetes do prefeito e do vice ficam em branco neste ano. Enviar o balancete é obrigação da prefeitura; "
+            f"quando ele chegar, os valores aparecem."})
     n_ver = len((eleitos or {}).get("vereadores") or []) or None
     cam = orgao["camara"]
 
@@ -232,7 +244,8 @@ def montar_ano(bruto: dict, eleitos: dict | None, pop: int | None) -> dict:
         saida_orgaos[p] = {
             "codigos": pap.get(p, []),
             "nomes": [bruto["orgaos"].get(c, ["", ""])[0] for c in pap.get(p, [])],
-            "gasto": r2(o["gasto"]), "pago": r2(o["pago"]),
+            "gasto": None if sem_executivo and p != "camara" else r2(o["gasto"]),
+            "pago": None if sem_executivo and p != "camara" else r2(o["pago"]),
             "fonte_gasto": "notas de empenho (balancete do ano ainda não enviado ao TCE)" if p in fonte else "balancete",
             "grupos": {k: r2(v) for k, v in o["grupos"].items() if abs(v) >= 0.01},
             "elementos": {k: r2(v) for k, v in sorted(o["elementos"].items(), key=lambda x: -x[1]) if abs(v) >= 0.01},
@@ -247,7 +260,8 @@ def montar_ano(bruto: dict, eleitos: dict | None, pop: int | None) -> dict:
     return {
         "ano": ano, "mes_ref": bruto["mes_ref"], "fechado": bruto["fechado"],
         "populacao": pop,
-        "gasto_total": r2(total), "pago_total": r2(pago_total),
+        "gasto_total": None if sem_executivo else r2(total), "pago_total": None if sem_executivo else r2(pago_total),
+        "sem_executivo": sem_executivo,
         "por_funcao": {k: r2(v) for k, v in sorted(por_funcao.items(), key=lambda x: -x[1]) if abs(v) >= 0.01},
         "por_grupo": {k: r2(v) for k, v in por_grupo.items() if abs(v) >= 0.01},
         "receita_total": r2(receita_total),

@@ -230,16 +230,16 @@ async function rMunicipio() {
   kpis("#m-kpis", [
     ["Câmara municipal", curto(x(cam.gasto)), (a.n_vereadores ? `${a.n_vereadores} vereadores · ${curto(x(a.camara_por_vereador))} por vereador` : "")
 ],
-    ["Gabinete do prefeito + vice", curto(x(pre.gasto + vic.gasto))],
-    ["Gasto total da prefeitura", curto(x(a.gasto_total)), a.populacao ? brl(x(a.gasto_total) / a.populacao) + " por habitante" : ""],
+    ["Gabinete do prefeito + vice", pre.gasto == null ? "—" : curto(x(pre.gasto + vic.gasto)), pre.gasto == null ? "balancete da prefeitura não enviado" : ""],
+    ["Gasto total da prefeitura", a.gasto_total == null ? "—" : curto(x(a.gasto_total)), a.gasto_total == null ? "balancete da prefeitura não enviado" : a.populacao ? brl(x(a.gasto_total) / a.populacao) + " por habitante" : ""],
     ["Receita do ano", curto(x(a.receita_total)), `emendas: ${curto(x(a.emendas_total))}`],
     ["Teto do salário do vereador", brl(a.teto_subsidio_vereador), "por mês, pela Constituição"],
   ]);
   // empenhado, pago e a pagar: câmara, gabinetes e prefeitura inteira
   const comPago = (o) => o && (o.fonte_gasto || "balancete") === "balancete";
   const linhasEP = [["Câmara municipal", cam.gasto, comPago(cam) ? cam.pago : null],
-    ["Gabinete do prefeito + vice", pre.gasto + vic.gasto, comPago(pre) && comPago(vic) ? pre.pago + vic.pago : null],
-    ["Prefeitura inteira (todos os órgãos)", a.gasto_total, a.pago_total || null]];
+    ...(pre.gasto == null ? [] : [["Gabinete do prefeito + vice", pre.gasto + vic.gasto, comPago(pre) && comPago(vic) ? pre.pago + vic.pago : null]]),
+    ...(a.gasto_total == null ? [] : [["Prefeitura inteira (todos os órgãos)", a.gasto_total, a.pago_total || null]])];
   $("#m-empenho").innerHTML = `<header><h2>Empenhado, pago e a pagar em ${E.ano}</h2><span class="dica">até ${mesRef(a.mes_ref)}${a.fechado ? " · ano fechado" : " · ano em andamento"}</span></header>
     <div class="ep-lista">${linhasEP.map(([rot, emp, pg]) => { const ap = pg == null ? null : Math.max(0, emp - pg), w = emp > 0 && pg != null ? Math.min(100, 100 * pg / emp) : 0;
       return `<div class="ep-linha"><div class="ep-rot">${rot}</div>
@@ -259,7 +259,7 @@ async function rMunicipio() {
     if (dvC) destaques.push([dvC.tipo === "sem_balancete" ? "Atenção: a câmara não enviou o balancete ao TCE-CE" : "Atenção: notas e balancete da câmara não batem",
       dvC.tipo === "sem_balancete" ? "valor pela soma das notas de empenho que a própria câmara registrou" : `diferença de ${brl(a.conferencia.camara.diferenca)}`, "#c4161c"]);
     if (a.n_vereadores) destaques.push([`${curto(x(a.camara_por_vereador))} por vereador no ano`, `câmara inteira ÷ ${a.n_vereadores} vereadores eleitos`, "#118dff"]);
-    destaques.push([`Gabinete do prefeito e do vice: ${curto(x(pre.gasto + vic.gasto))}`, "órgão inteiro da prefeitura, não é o salário do prefeito", "#107c41"]);
+    if (pre.gasto != null) destaques.push([`Gabinete do prefeito e do vice: ${curto(x(pre.gasto + vic.gasto))}`, "órgão inteiro da prefeitura, não é o salário do prefeito", "#107c41"]);
     const pes = x(cam.grupos?.pessoal || 0), dia = x(cam.grupos?.diarias || 0), out = Math.max(0, x(cam.gasto) - pes - dia);
     CartaoQC.abrir({
       titulo: `Câmara Municipal · ${E.ano}${a.fechado ? "" : " (até " + mesRef(a.mes_ref) + ")"}`,
