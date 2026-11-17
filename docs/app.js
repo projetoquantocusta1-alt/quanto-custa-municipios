@@ -573,7 +573,7 @@ async function iniciar() {
   $("#atualizado").textContent = `Atualizado em ${new Date(E.meta.gerado_em).toLocaleString("pt-BR")}`;
   if (E.meta.ipca?.referencia) $("#ipca-ref").textContent = `corrigidos pelo IPCA até ${E.meta.ipca.referencia}`;
   const cob = E.meta.cobertura[E.ano] || 0;
-  if (cob < E.meta.total_municipios) { $("#aviso").hidden = false; $("#aviso").textContent = `${cob} de ${E.meta.total_municipios} municípios já têm dados de ${E.ano}. O robô completa o restante nos próximos dias.`; }
+  avisoCobertura();
   const [pag, sim] = location.hash.slice(1).split("/");
   if (sim) E.sim = sim;
   irPara(["inicio", "prefeitos", "camaras", "municipio", "metodo"].includes(pag) ? pag : "inicio");
@@ -583,8 +583,13 @@ document.addEventListener("click", e => {
   const s = e.target.closest("[data-sim]"); if (s) return abrirMunicipio(s.dataset.sim);
   const p = e.target.closest("[data-pag],[data-ir]"); if (p && (p.dataset.pag || p.dataset.ir) && p.tagName === "BUTTON") irPara(p.dataset.pag || p.dataset.ir);
 });
-$("#f-ano").onchange = e => { E.ano = e.target.value; const c = E.meta.cobertura[E.ano] || 0; $("#aviso").hidden = c >= E.meta.total_municipios;
-  $("#aviso").textContent = `${c} de ${E.meta.total_municipios} municípios já têm dados de ${E.ano}.`; render(); };
+// municípios sem dados no ano: diz quais são e por quê (o TCE-CE não devolve os dados; o robô procura todo dia)
+function avisoCobertura() {
+  const sem = E.res.filter(m => !m.anos[E.ano]).map(m => titulo(m.nome));
+  $("#aviso").hidden = !sem.length;
+  if (sem.length) $("#aviso").textContent = `${E.meta.total_municipios - sem.length} de ${E.meta.total_municipios} municípios têm dados de ${E.ano}. Sem dados: ${sem.slice(0, 12).join(", ")}${sem.length > 12 ? ` e mais ${sem.length - 12}` : ""}. O TCE-CE ainda não devolve os dados ${sem.length > 1 ? "desses municípios" : "desse município"} para ${E.ano}; o robô procura de novo todos os dias. ${sem.length > 1 ? "Eles ficam" : "Ele fica"} fora dos totais deste ano.`;
+}
+$("#f-ano").onchange = e => { E.ano = e.target.value; avisoCobertura(); render(); };
 $("#f-ipca").onchange = e => { E.ipca = e.target.checked; render(); };
 $("#f-mun").onchange = e => { const m = E.res.find(x => semAcento(titulo(x.nome)) === semAcento(e.target.value)); if (m) abrirMunicipio(m.sim); };
 $("#p-busca").oninput = () => { E.limP = 20; rPrefeitos(); };
