@@ -45,7 +45,7 @@
   </header>
 
   <section class="segmentacoes" aria-label="Filtros">
-    <label>Estado<select id="f-uf"><option value="ce">Ceará</option><option value="ba">Bahia</option><option value="pb">Paraíba</option><option value="pe">Pernambuco</option></select></label>
+    <label>Estado<select id="f-uf"><option value="ce">Ceará</option><option value="ba">Bahia</option><option value="pb">Paraíba</option><option value="pe">Pernambuco</option><option value="rn">Rio Grande do Norte</option></select></label>
     <label>Ano<select id="f-ano"></select></label>
     <label class="busca">Município<input id="f-mun" list="lista-mun" type="search" placeholder="Digite o nome da cidade" autocomplete="off"></label>
     <datalist id="lista-mun"></datalist>
@@ -202,7 +202,7 @@
 /* Página única dos municípios: cada estado tem o seu repositório e o seu robô; aqui se escolhe o estado.
    Ceará: app.js deste repositório. Outros estados: o módulo publicado pelo repositório do estado. */
 (function () {
-  var ESTADOS = { ce: "app.js?v=12", ba: "../quanto-custa-municipios-ba/uf.js?v=2", pb: "../quanto-custa-municipios-pb/uf.js?v=2", pe: "../quanto-custa-municipios-pe/uf.js?v=3" };
+  var ESTADOS = { ce: "app.js?v=12", ba: "../quanto-custa-municipios-ba/uf.js?v=2", pb: "../quanto-custa-municipios-pb/uf.js?v=2", pe: "../quanto-custa-municipios-pe/uf.js?v=3", rn: "../quanto-custa-municipios-rn/uf.js?v=2" };
   var pedido = new URL(location).searchParams.get("uf");
   var uf = ESTADOS[pedido] ? pedido : "ce";
   var sel = document.getElementById("f-uf");
