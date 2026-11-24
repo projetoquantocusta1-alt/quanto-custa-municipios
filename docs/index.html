@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Projeto Quanto Custa — Prefeitos e vereadores do Ceará</title>
+<title>Prefeituras e câmaras municipais — Quanto Custa</title>
 <link rel="icon" href="marca/favicon.svg" type="image/svg+xml">
-<meta property="og:title" content="Projeto Quanto Custa — Prefeitos e vereadores do Ceará">
+<meta property="og:title" content="Prefeituras e câmaras municipais — Quanto Custa">
 <meta property="og:description" content="Projeto Quanto Custa: quanto custam as câmaras municipais, os gabinetes dos prefeitos e as prefeituras dos 184 municípios do Ceará desde 2017 — dados oficiais do TCE-CE, TSE, IBGE e CGU, atualizados todo dia.">
 <meta property="og:image" content="https://quantocustaum.com/og.png">
 <meta property="og:url" content="https://quantocustaum.com/quanto-custa-municipios/">
@@ -202,7 +202,7 @@
 /* Página única dos municípios: cada estado tem o seu repositório e o seu robô; aqui se escolhe o estado.
    Ceará: app.js deste repositório. Outros estados: o módulo publicado pelo repositório do estado. */
 (function () {
-  var ESTADOS = { ce: "app.js?v=12", ba: "../quanto-custa-municipios-ba/uf.js?v=3", pb: "../quanto-custa-municipios-pb/uf.js?v=3", pe: "../quanto-custa-municipios-pe/uf.js?v=4", rn: "../quanto-custa-municipios-rn/uf.js?v=3", ma: "../quanto-custa-municipios-ma/uf.js?v=1", pi: "../quanto-custa-municipios-pi/uf.js?v=1", al: "../quanto-custa-municipios-al/uf.js?v=1", se: "../quanto-custa-municipios-se/uf.js?v=1" };
+  var ESTADOS = { ce: "app.js?v=12", ba: "../quanto-custa-municipios-ba/uf.js?v=4", pb: "../quanto-custa-municipios-pb/uf.js?v=4", pe: "../quanto-custa-municipios-pe/uf.js?v=5", rn: "../quanto-custa-municipios-rn/uf.js?v=4", ma: "../quanto-custa-municipios-ma/uf.js?v=2", pi: "../quanto-custa-municipios-pi/uf.js?v=2", al: "../quanto-custa-municipios-al/uf.js?v=2", se: "../quanto-custa-municipios-se/uf.js?v=2" };
   var pedido = new URL(location).searchParams.get("uf");
   var uf = ESTADOS[pedido] ? pedido : "ce";
   var sel = document.getElementById("f-uf");
