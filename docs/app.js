@@ -1,4 +1,4 @@
-/* Projeto Quanto Custa — Prefeitos e vereadores do Ceará */
+/* Quanto Custa — Prefeitos e vereadores do Ceará */
 (() => {
 "use strict";
 const $ = (s, el = document) => el.querySelector(s);

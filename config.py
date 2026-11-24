@@ -1,4 +1,4 @@
-"""Configuração do Projeto Quanto Custa — Municípios do Ceará (prefeitos e vereadores)."""
+"""Configuração do Quanto Custa — Municípios do Ceará (prefeitos e vereadores)."""
 
 ANO_INICIAL = 2017            # primeiro exercício coletado
 UF = "CE"
