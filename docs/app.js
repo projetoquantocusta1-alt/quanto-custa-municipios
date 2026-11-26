@@ -87,7 +87,7 @@ function render() {
 }
 
 function kpis(el, itens) {
-  $(el).innerHTML = itens.map(([rot, val, obs]) => `<div class="kpi"><div class="rot">${rot}</div><div class="val num">${val}</div>${obs ? `<div class="obs">${obs}</div>` : ""}</div>`).join("");
+  $(el).innerHTML = itens.map(([rot, val, obs]) => `<div class="kpi"><div class="rot">${esc(rot)}</div><div class="val num">${val}</div>${obs ? `<div class="obs">${esc(obs)}</div>` : ""}</div>`).join("");
 }
 function top5(el, lista, fmt, sub) {
   $(el).innerHTML = lista.slice(0, 5).map(([m, val, l]) => `<li><span><button class="link-dep" data-sim="${m.sim}">${esc(titulo(m.nome))}</button><span class="s">${sub(m, l)}</span></span><span class="v">${fmt(val)}</span></li>`).join("")
