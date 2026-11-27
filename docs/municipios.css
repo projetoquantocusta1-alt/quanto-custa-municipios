@@ -31,3 +31,23 @@ main { padding: 20px; }
 .divergencias li { margin: 4px 0; line-height: 1.45; }
 .divergencias .sub { margin: 4px 0 0; color: #6b3a35; }
 .selo-conf.alerta { background: #FDF0EF; color: #8a2a22; border: 1px solid #E3A6A0; }
+
+/* ---- Dívida (RGF): selo, composição, barra do limite, grade ---- */
+.dv-selo{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.78em;font-weight:700;color:#fff;white-space:nowrap}
+.dv-ok{background:#2f7d4f}.dv-alerta{background:#cf8300}.dv-acima{background:#c4161c}
+.dv-comp{margin:12px 0 2px}
+.dv-comp .ln{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid rgba(128,128,128,.22)}
+.dv-comp .ln.sub{padding-left:18px;font-size:.92em;opacity:.82;border-bottom:1px dotted rgba(128,128,128,.22)}
+.dv-comp .ln .v{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.dv-comp .ln.menos .v{color:#c4161c}
+.dv-comp .ln.tot{border-bottom:none;border-top:2px solid currentColor;margin-top:3px;padding-top:10px;font-weight:800;font-size:1.06em}
+.dv-comp .ln.tot .v{color:#c4161c}
+.dv-barra{position:relative;height:26px;border-radius:5px;background:rgba(128,128,128,.2);overflow:visible;margin:8px 0 2px}
+.dv-barra i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;display:block}
+.dv-barra .alerta{position:absolute;top:-4px;bottom:-4px;width:2px;background:#c4161c}
+.dv-leg{display:flex;justify-content:space-between;font-size:.78em;opacity:.72;margin-top:4px}
+.dv-leg .al{color:#c4161c;opacity:1}
+.dv-sub{font-size:.9em;opacity:.8;margin-top:6px}
+.dv-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:640px){.dv-grid{grid-template-columns:1fr}}
+#m-divida .kpis{margin:4px 0 2px}

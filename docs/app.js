@@ -4,7 +4,7 @@
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const E = { ano: null, ipca: true, pag: "inicio", sim: null, meta: null, res: null, campos: {}, det: {}, graf: {},
-  limP: 20, limC: 20, limF: 20, ordP: ["gab", -1], ordC: ["porVer", -1] };
+  limP: 20, limC: 20, limF: 20, ordP: ["gab", -1], ordC: ["porVer", -1], divida: null, limD: 30, ordD: ["dcl", -1] };
 
 const NOMES_GRUPO = { pessoal: "Pessoal e encargos", diarias: "Diárias e passagens", servicos: "Serviços contratados",
   material: "Material de consumo", obras: "Obras e equipamentos", divida: "Dívida", repasses: "Repasses e auxílios", outros: "Outras" };
@@ -83,7 +83,7 @@ function abrirMunicipio(sim) {
 /* --------------------------------------------------------------- render */
 function render() {
   if (!E.res) return;
-  ({ inicio: rInicio, prefeitos: rPrefeitos, camaras: rCamaras, municipio: rMunicipio, metodo: () => {} })[E.pag]();
+  ({ inicio: rInicio, prefeitos: rPrefeitos, camaras: rCamaras, divida: rDivida, municipio: rMunicipio, metodo: () => {} })[E.pag]();
 }
 
 function kpis(el, itens) {
@@ -324,6 +324,68 @@ async function rMunicipio() {
     { label: "Gabinetes prefeito + vice", data: anos.map(y => (D.anos[y].orgaos.prefeito.gasto + D.anos[y].orgaos.vice.gasto) * fator(y)), backgroundColor: "#e66c37" }] },
     options: { ...opBarra(false), plugins: { legend: { display: true }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${brl(c.raw)}` } } } } });
   rExtras(D, a);
+  blocoDivida(D);
+}
+
+function blocoDivida(D) {
+  const box = $("#m-divida"), dv = D && D.divida;
+  if (!box) return;
+  if (!dv || !dv.anos || !Object.keys(dv.anos).length) { box.hidden = true; return; }
+  box.hidden = false;
+  const anos = Object.keys(dv.anos).sort(), u = dv.anos[dv.ultimo];
+  const dcl = u.dcl || 0, lim = u.limite || 0, al = u.limite_alerta || 0, temDivida = dcl > 0;
+  const status = lim && dcl > lim ? ["dv-acima", "acima do limite"] : al && dcl > al ? ["dv-alerta", "em alerta"] : ["dv-ok", "dentro do limite"];
+  const cor = status[0] === "dv-acima" ? "#c4161c" : status[0] === "dv-alerta" ? "#cf8300" : "#2f7d4f";
+  const pctLim = lim ? Math.max(0, Math.min(100, dcl / lim * 100)) : 0;
+  const n1 = n => n == null ? "—" : n.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+  const kpi = (r, val, o) => `<div class="kpi"><div class="rot">${r}</div><div class="val num">${val}</div>${o ? `<div class="obs">${o}</div>` : ""}</div>`;
+  const comp = temDivida ? `<div class="dv-comp">
+      <div class="ln"><span><b>Dívida bruta</b> (tudo o que deve)</span><span class="v">${curto(u.dc)}</span></div>
+      <div class="ln sub"><span>Empréstimos, financiamentos e parcelamentos</span><span class="v">${curto(u.contratual)}</span></div>
+      <div class="ln sub"><span>Precatórios (dívidas judiciais)</span><span class="v">${curto(u.precatorios)}</span></div>
+      ${u.outras ? `<div class="ln sub"><span>Outras dívidas</span><span class="v">${curto(u.outras)}</span></div>` : ""}
+      <div class="ln menos"><span>(−) Dinheiro em caixa e aplicações</span><span class="v">− ${curto(u.deducoes)}</span></div>
+      <div class="ln tot"><span>Dívida líquida (o que sobra devendo)</span><span class="v">${curto(dcl)}</span></div></div>`
+    : `<p class="dv-sub">Em ${dv.ultimo}, ${esc(titulo(D.nome))} tinha <b>mais dinheiro em caixa do que dívida</b> (dívida líquida de ${curto(dcl)}). A dívida bruta era ${curto(u.dc)} e o caixa e aplicações, ${curto(u.deducoes)}.</p>`;
+  const barra = lim ? `<div class="dv-barra"><i style="width:${pctLim}%;background:${cor}"></i><span class="alerta" style="left:90%"></span></div>
+      <div class="dv-leg"><span>0</span><span class="al">▲ alerta</span><span>teto (120% da receita)</span></div>
+      <p class="dv-sub">A dívida líquida ocupa <b>${n1(pctLim)}%</b> do teto de endividamento permitido por lei.</p>` : "";
+  box.innerHTML = `<header><h2>Dívida da prefeitura</h2><span class="dica">RGF de ${dv.ultimo}${u.fechado ? "" : " (parcial)"} · <span class="dv-selo ${status[0]}">${status[1]}</span></span></header>
+    <div class="kpis">${kpi("Deve hoje (dívida líquida)", curto(dcl), "descontando o caixa")}${kpi("% da receita do ano", u.pct_dcl != null ? n1(u.pct_dcl) + "%" : "—", "teto legal: 120%")}${kpi("Dívida bruta", curto(u.dc), "antes de descontar o caixa")}${dv.previsao ? kpi("Previsão " + dv.previsao.ano, curto(dv.previsao.dcl), "estimativa (veja abaixo)") : ""}</div>
+    ${barra}
+    <div class="dv-grid"><div><h3 class="d-sec">De que é feita a dívida (${dv.ultimo})</h3>${comp}</div>
+      <div><h3 class="d-sec">Como evoluiu${dv.previsao ? " — e a previsão" : ""}</h3><div class="canvas-box"><canvas id="g-divida"></canvas></div></div></div>
+    <p class="dv-sub"><b>Dívida consolidada líquida (DCL)</b>: o quanto a prefeitura deve a longo prazo menos o dinheiro em caixa; é a medida que a lei usa para o limite. A dívida não vem do TCE-CE, e sim do <b>RGF do SICONFI</b> (Tesouro Nacional).${dv.previsao ? ` <b>Previsão ${dv.previsao.ano}</b>: ${curto(dv.previsao.dcl)}, seguindo a ${dv.previsao.metodo} — é só uma estimativa da tendência.` : ""} Valores nominais (sem correção pela inflação).</p>`;
+  const labels = anos.map(y => dv.anos[y].fechado ? y : y + "*"), dados = anos.map(y => dv.anos[y].dcl), cores = anos.map(() => "#c4161c");
+  if (dv.previsao) { labels.push(dv.previsao.ano + "*"); dados.push(dv.previsao.dcl); cores.push("#e8989b"); }
+  grafico("g-divida", { type: "bar", data: { labels, datasets: [{ data: dados, backgroundColor: cores }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => brl(c.raw), afterLabel: c => dv.previsao && c.dataIndex === labels.length - 1 ? "previsão (estimativa)" : (anos[c.dataIndex] && !dv.anos[anos[c.dataIndex]].fechado ? "parcial" : "") } } }, scales: { y: { ticks: { callback: v => curto(v) } } } } });
+}
+
+function rDivida() {
+  const DV = E.divida;
+  if (!DV || !DV.municipios || !DV.municipios.length) {
+    $("#d-kpis").innerHTML = ""; $("#d-mais").hidden = true;
+    $("#d-tab").innerHTML = `<tbody><tr><td class="vazio">A dívida ainda está sendo coletada pelo robô (RGF do SICONFI). Volte em algumas horas.</td></tr></tbody>`;
+    return;
+  }
+  const ms = DV.municipios.map(r => ({ ...r, porHab: r.populacao && r.dcl != null ? r.dcl / r.populacao : null }));
+  const acima = ms.filter(r => r.acima).length, alerta = ms.filter(r => r.alerta && !r.acima).length;
+  const somaDcl = ms.reduce((s, r) => s + (r.dcl > 0 ? r.dcl : 0), 0);
+  kpis("#d-kpis", [
+    ["Dívida líquida somada", curto(somaDcl), `${ms.length} prefeituras com dado · ano mais recente de cada`],
+    ["Acima do teto legal", String(acima), acima ? "passaram de 120% da receita" : "nenhuma até agora"],
+    ["Em alerta", String(alerta), "perto do teto (108% ou mais)"],
+  ]);
+  const q = semAcento($("#d-busca") ? $("#d-busca").value : ""), [k, d] = E.ordD;
+  const L = ms.filter(r => !q || semAcento(r.nome).includes(q))
+    .slice().sort((a, b) => d * ((a[k] == null ? -1e18 : a[k]) - (b[k] == null ? -1e18 : b[k])) || a.nome.localeCompare(b.nome, "pt-BR"));
+  const vis = L.slice(0, E.limD), n1 = n => n == null ? "—" : n.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+  const selo = r => r.acima ? '<span class="dv-selo dv-acima">acima</span>' : r.alerta ? '<span class="dv-selo dv-alerta">alerta</span>' : '<span class="dv-selo dv-ok">ok</span>';
+  const th = (k2, t, nu) => `<th class="${nu ? "num" : ""}" data-kd="${k2}" style="cursor:pointer">${t}${k === k2 ? (d < 0 ? " ▼" : " ▲") : ""}</th>`;
+  $("#d-tab").innerHTML = `<thead><tr><th class="num">#</th>${th("nome", "Município")}${th("populacao", "População", 1)}${th("dcl", "Dívida líquida", 1)}${th("porHab", "Por habitante", 1)}${th("pct_dcl", "% da receita", 1)}<th>Situação (ano)</th></tr></thead><tbody>${
+    vis.map((r, i) => `<tr><td class="num sub">${i + 1}</td><td><button class="link-dep" data-sim="${r.sim}">${esc(titulo(r.nome))}</button></td><td class="num">${r.populacao != null ? num(r.populacao) : "—"}</td><td class="num">${curto(r.dcl)}</td><td class="num">${r.porHab != null ? brl(r.porHab) : "—"}</td><td class="num">${r.pct_dcl != null ? n1(r.pct_dcl) + "%" : "—"}</td><td>${selo(r)} <span class="sub">${r.ano}${r.fechado ? "" : " parcial"}</span></td></tr>`).join("") || `<tr><td colspan="7" class="vazio">Nada encontrado.</td></tr>`}</tbody>`;
+  $("#d-mais").hidden = L.length <= E.limD;
 }
 
 function rForn(a, f) {
@@ -564,6 +626,8 @@ async function iniciar() {
     return;
   }
   E.meta._campos = E.res.campos; E.res = E.res.municipios;
+  E.divida = await json("dados/divida.json").catch(() => null);
+  if (!E.divida || !E.divida.municipios || !E.divida.municipios.length) document.querySelectorAll('.menu nav button[data-pag="divida"]').forEach(b => (b.hidden = true));
   const anos = E.meta.anos.slice().reverse();
   // ano padrão: o mais recente com pelo menos metade dos municípios
   E.ano = String(anos.find(a => (E.meta.cobertura[a] || 0) >= E.meta.total_municipios / 2) || anos[0]);
@@ -576,7 +640,7 @@ async function iniciar() {
   avisoCobertura();
   const [pag, sim] = location.hash.slice(1).split("/");
   if (sim) E.sim = sim;
-  irPara(["inicio", "prefeitos", "camaras", "municipio", "metodo"].includes(pag) ? pag : "inicio");
+  irPara(["inicio", "prefeitos", "camaras", "divida", "municipio", "metodo"].includes(pag) ? pag : "inicio");
 }
 
 document.addEventListener("click", e => {
@@ -596,6 +660,9 @@ $("#p-busca").oninput = () => { E.limP = 20; rPrefeitos(); };
 $("#c-busca").oninput = () => { E.limC = 20; rCamaras(); };
 $("#p-mais").onclick = () => { E.limP += 30; rPrefeitos(); };
 $("#c-mais").onclick = () => { E.limC += 30; rCamaras(); };
+if ($("#d-busca")) $("#d-busca").oninput = () => { E.limD = 30; rDivida(); };
+if ($("#d-mais")) $("#d-mais").onclick = () => { E.limD += 50; rDivida(); };
+if ($("#d-tab")) $("#d-tab").addEventListener("click", e => { const th = e.target.closest("th[data-kd]"); if (!th) return; const k = th.dataset.kd; E.ordD = [k, E.ordD[0] === k ? -E.ordD[1] : (k === "nome" ? 1 : -1)]; E.limD = 30; rDivida(); });
 $("#m-orgao").onchange = () => { E.limF = 20; render(); };
 $("#m-forn-mais").onclick = () => { E.limF += 30; render(); };
 ["#n-q", "#n-orgao", "#n-mes", "#n-el", "#n-nf", "#n-ord"].forEach(s => $(s)[s === "#n-q" ? "oninput" : "onchange"] = () => { E.limN = 30; E.abertas = new Set(); rNotas(); });
